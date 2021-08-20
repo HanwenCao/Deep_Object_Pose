@@ -5,6 +5,5 @@
 
 2. Install Nvidia docker container
 
-  https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html
- 
+  https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/install-guide.html#setting-up-nvidia-container-toolkit
  
