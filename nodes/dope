@@ -329,6 +329,8 @@ class DopeNode(object):
             )
 
             # Publish pose and overlay cube on image
+            z_min = 1.0#
+            pose_comp = PoseStamped()#
             for i_r, result in enumerate(results):
                 if result["location"] is None:
                     continue
@@ -369,7 +371,7 @@ class DopeNode(object):
                 pose_msg.pose.position.z = pose_matrix_offset[2,3]#
 
                 # Project to 2D image plane
-                pose_2d = Pose2D()
+                pose_2d = Pose2D()#
                 fx = camera_info.K[0]#
                 fy = camera_info.K[4]#
                 K_matrix = np.asarray(camera_info.K).reshape((3, 3))#
@@ -380,7 +382,7 @@ class DopeNode(object):
 
                 # Look for the corresponding depth value
                 curr_depth_img = self.cv_bridge.imgmsg_to_cv2(depth_msg)#
-                CONVERT_SCALE_MM_TO_METERS = 1000
+                CONVERT_SCALE_MM_TO_METERS = 1000#
                 # print(curr_depth_img.shape)
                 if int(pose_2d.y) < curr_depth_img.shape[0] and (pose_2d.x) < curr_depth_img.shape[1]: 
                     if int(pose_2d.y) > 0 and int(pose_2d.x) > 0:
@@ -391,20 +393,17 @@ class DopeNode(object):
                         # print('xyz_3d:', xyz_3d)
                         # print('pose_2d.x:', pose_2d.x[0], 'pose_2d.y:',pose_2d.y[0])
 
-                        # write results to output msg
-                        pose_comp = PoseStamped()#
-                        pose_comp.header = image_msg.header#
-                        pose_comp.pose.position.x = xyz_3d[0]#
-                        pose_comp.pose.position.y = xyz_3d[1]#
-                        pose_comp.pose.position.z = xyz_3d[2]#
-                        pose_comp.pose.orientation = pose_msg.pose.orientation#
-
-                        # Publish
-                        self.pub_comp[m].publish(pose_comp)#
-
-                
-
-
+                        
+                        # If multiple objects exist,
+                        # find the closest one.
+                        if xyz_3d[2] < z_min:#
+                            z_min = xyz_3d[2]#
+                            # write results to output msg
+                            pose_comp.header = image_msg.header#
+                            pose_comp.pose.position.x = xyz_3d[0]#
+                            pose_comp.pose.position.y = xyz_3d[1]#
+                            pose_comp.pose.position.z = xyz_3d[2]#
+                            pose_comp.pose.orientation = pose_msg.pose.orientation#
 
                 # Publish
                 self.pubs[m].publish(pose_msg)
@@ -431,6 +430,10 @@ class DopeNode(object):
                     for pair in result['projected_points']:
                         points2d.append(tuple(pair))
                     draw.draw_cube(points2d, self.draw_colors[m])
+
+            # Publish
+            #print(i_r,pose_comp.pose.position.z)#
+            self.pub_comp[m].publish(pose_comp)#
 
             # Publish the belief image
             if publish_belief_img:
